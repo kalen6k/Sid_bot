@@ -12,8 +12,23 @@ from sys import platform
 from gpt_ctrl import controller, announce_action
 from mouth import speak
 
-def main(source, energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4):
-    
+def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4, default_microphone: str = 'pulse'):
+    # Important for linux users. 
+    # Prevents permanent application hang and crash by using the wrong Microphone
+    if 'linux' in platform:
+        mic_name = default_microphone
+        if not mic_name or mic_name == 'list':
+            print("Available microphone devices are: ")
+            for index, name in enumerate(sr.Microphone.list_microphone_names()):
+                print(f"Microphone with name \"{name}\" found")   
+            exit()
+        else:
+            for index, name in enumerate(sr.Microphone.list_microphone_names()):
+                if mic_name in name:
+                    source = sr.Microphone(sample_rate=16000, device_index=index)
+                    break
+    else:
+        source = sr.Microphone(sample_rate=16000)
     # The last time a recording was retreived from the queue.
     phrase_time = None
     # Current raw audio bytes.
@@ -120,21 +135,4 @@ def main(source, energy_threshold: int = 600, record_timeout: float = 2, phrase_
 
 
 if __name__ == "__main__":
-    default_microphone: str = 'pulse'
-    # Important for linux users. 
-    # Prevents permanent application hang and crash by using the wrong Microphone
-    if 'linux' in platform:
-        mic_name = default_microphone
-        if not mic_name or mic_name == 'list':
-            print("Available microphone devices are: ")
-            for index, name in enumerate(sr.Microphone.list_microphone_names()):
-                print(f"Microphone with name \"{name}\" found")   
-            exit()
-        else:
-            for index, name in enumerate(sr.Microphone.list_microphone_names()):
-                if mic_name in name:
-                    source = sr.Microphone(sample_rate=16000, device_index=index)
-                    break
-    else:
-        source = sr.Microphone(sample_rate=16000)
-    main(source)
+    main()
