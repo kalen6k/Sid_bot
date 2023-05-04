@@ -23,9 +23,10 @@ from queue import Queue
 from tempfile import NamedTemporaryFile
 from time import sleep
 from sys import platform
+from gpt_ctrl import controller, announce_action
+from mouth import speak
 
-
-def main(energy_threshold: int = 400, record_timeout: float = 2, phrase_timeout: float = 4, default_microphone: str = 'pulse'):
+def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4, default_microphone: str = 'pulse'):
     
     # The last time a recording was retreived from the queue.
     phrase_time = None
@@ -58,6 +59,7 @@ def main(energy_threshold: int = 400, record_timeout: float = 2, phrase_timeout:
 
     temp_file = NamedTemporaryFile(suffix='.wav', delete = False).name
     transcription = ['']
+    transcription_lines = 0
     
     with source:
         recorder.adjust_for_ambient_noise(source)
@@ -120,7 +122,13 @@ def main(energy_threshold: int = 400, record_timeout: float = 2, phrase_timeout:
                 # If we detected a pause between recordings, add a new item to our transcripion.
                 # Otherwise edit the existing one.
                 if phrase_complete:
+                    # remove the text before the occurence of "Sid" in the transcription
+                    # this is to only process the text after the user says "Sid"
+                    text = text[text.find("Sid") + 3:]
+                    action = controller(text)
+                    speak(announce_action(action))
                     transcription.append(text)
+                    transcription_lines+=1
                     
                 else:
                     transcription[-1] = text
