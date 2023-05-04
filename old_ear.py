@@ -1,3 +1,17 @@
+import os
+from ctypes import *
+from sys import platform
+
+if 'linux' in platform:
+    # Mute the ALSA error messages for now because the transcription works
+    # will investigate later
+    ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
+    def py_error_handler(filename, line, function, err, fmt):
+        pass
+    c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
+    asound = cdll.LoadLibrary('libasound.so')
+    asound.snd_lib_error_set_handler(c_error_handler)
+
 import io
 import os
 import speech_recognition as sr
