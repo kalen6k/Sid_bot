@@ -1,0 +1,4 @@
+portaudio19-dev
+libasound2
+alsa-utils
+alsa-oss
