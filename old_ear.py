@@ -25,7 +25,7 @@ from time import sleep
 from sys import platform
 
 
-def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4, default_microphone: str = 'pulse'):
+def main(energy_threshold: int = 400, record_timeout: float = 2, phrase_timeout: float = 4, default_microphone: str = 'pulse'):
     
     # The last time a recording was retreived from the queue.
     phrase_time = None
