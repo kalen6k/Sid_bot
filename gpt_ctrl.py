@@ -12,6 +12,7 @@ def controller(
       ], 
       temperature = 0
     )
+  print(completion["choices"][0]["message"]["content"])
   return completion["choices"][0]["message"]["content"]
 
 def announce_action(action_dict):

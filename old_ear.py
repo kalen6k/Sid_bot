@@ -97,11 +97,12 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
                 if phrase_complete:
                     # remove the text before the occurence of "Sid" in the transcription
                     # this is to only process the text once the user says "Sid"
-                    text = text[text.find("Sid"):]
-                    action = controller(text)
-                    speak(announce_action(action))
-                    transcription.append(text)
-                    transcription_lines+=1
+                    if text.find("Sid") != -1:
+                        text = text[text.find("Sid"):]
+                        action = controller(text)
+                        speak(announce_action(action))
+                        transcription.append(text)
+                        transcription_lines+=1
                     
                 else:
                     transcription[-1] = text
