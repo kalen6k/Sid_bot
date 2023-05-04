@@ -74,7 +74,7 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
         data_queue.put(data)
     
     def whisperAPI(filename):
-        openai.api_key = os.getenv("OPENAI_API_KEY")
+        openai.api_key = os.getenv('OPENAI_API_KEY')
         audio_file = open(filename, "rb")
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
         print("hello")
@@ -123,8 +123,8 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
                 # Otherwise edit the existing one.
                 if phrase_complete:
                     # remove the text before the occurence of "Sid" in the transcription
-                    # this is to only process the text after the user says "Sid"
-                    text = text[text.find("Sid") + 3:]
+                    # this is to only process the text once the user says "Sid"
+                    text = text[text.find("Sid"):]
                     action = controller(text)
                     speak(announce_action(action))
                     transcription.append(text)
