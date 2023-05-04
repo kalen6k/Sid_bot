@@ -19,6 +19,7 @@ idna==3.4
 multidict==6.0.4
 openai==0.27.6
 pigpio==1.78
+PyAudio==0.2.13
 pydub==0.25.1
 pyftdi==0.54.0
 pyserial==3.5

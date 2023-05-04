@@ -60,9 +60,6 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
     temp_file = NamedTemporaryFile(suffix='.wav', delete = False).name
     transcription = ['']
     transcription_lines = 0
-    
-    with source:
-        recorder.adjust_for_ambient_noise(source)
 
     def record_callback(_, audio:sr.AudioData) -> None:
         """
@@ -79,10 +76,12 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
         print("hello")
         return transcript
+    
+    with source:
+        recorder.adjust_for_ambient_noise(source)
+        # Move the listen_in_background call inside the 'with' statement
+        recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
 
-    # Create a background thread that will pass us raw audio bytes.
-    # We could do this manually but SpeechRecognizer provides a nice helper.
-    recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
 
     while True:
         try:
