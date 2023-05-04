@@ -77,10 +77,11 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
         print("hello")
         return transcript
     
-    with source:
-        recorder.adjust_for_ambient_noise(source)
-        # Move the listen_in_background call inside the 'with' statement
-        recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
+    with source as temp_source:
+        recorder.adjust_for_ambient_noise(temp_source)
+    
+    
+    recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
 
 
     while True:
