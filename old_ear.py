@@ -1,17 +1,3 @@
-import os
-from ctypes import *
-from sys import platform
-
-if 'linux' in platform:
-    # Mute the ALSA error messages for now because the transcription works
-    # will investigate later
-    ERROR_HANDLER_FUNC = CFUNCTYPE(None, c_char_p, c_int, c_char_p, c_int, c_char_p)
-    def py_error_handler(filename, line, function, err, fmt):
-        pass
-    c_error_handler = ERROR_HANDLER_FUNC(py_error_handler)
-    asound = cdll.LoadLibrary('libasound.so')
-    asound.snd_lib_error_set_handler(c_error_handler)
-
 import io
 import os
 import speech_recognition as sr
@@ -26,7 +12,7 @@ from sys import platform
 from gpt_ctrl import controller, announce_action
 from mouth import speak
 
-def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4, default_microphone: str = 'pulse'):
+def main(source, energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4):
     
     # The last time a recording was retreived from the queue.
     phrase_time = None
@@ -39,28 +25,13 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
     recorder.energy_threshold = energy_threshold
     # Definitely do this, dynamic energy compensation lowers the energy threshold dramtically to a point where the SpeechRecognizer never stops recording.
     recorder.dynamic_energy_threshold = False
-    
-    # Important for linux users. 
-    # Prevents permanent application hang and crash by using the wrong Microphone
-    if 'linux' in platform:
-        mic_name = default_microphone
-        if not mic_name or mic_name == 'list':
-            print("Available microphone devices are: ")
-            for index, name in enumerate(sr.Microphone.list_microphone_names()):
-                print(f"Microphone with name \"{name}\" found")   
-            return
-        else:
-            for index, name in enumerate(sr.Microphone.list_microphone_names()):
-                if mic_name in name:
-                    source = sr.Microphone(sample_rate=16000, device_index=index)
-                    break
-    else:
-        source = sr.Microphone(sample_rate=16000)
 
     temp_file = NamedTemporaryFile(suffix='.wav', delete = False).name
     transcription = ['']
     transcription_lines = 0
-
+    with source as temp_source:
+        recorder.adjust_for_ambient_noise(temp_source)
+        
     def record_callback(_, audio:sr.AudioData) -> None:
         """
         Threaded callback function to recieve audio data when recordings finish.
@@ -77,8 +48,6 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
         print("hello")
         return transcript
     
-    with source as temp_source:
-        recorder.adjust_for_ambient_noise(temp_source)
     
     
     recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
@@ -151,4 +120,21 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
 
 
 if __name__ == "__main__":
-    main()
+    default_microphone: str = 'pulse'
+    # Important for linux users. 
+    # Prevents permanent application hang and crash by using the wrong Microphone
+    if 'linux' in platform:
+        mic_name = default_microphone
+        if not mic_name or mic_name == 'list':
+            print("Available microphone devices are: ")
+            for index, name in enumerate(sr.Microphone.list_microphone_names()):
+                print(f"Microphone with name \"{name}\" found")   
+            exit()
+        else:
+            for index, name in enumerate(sr.Microphone.list_microphone_names()):
+                if mic_name in name:
+                    source = sr.Microphone(sample_rate=16000, device_index=index)
+                    break
+    else:
+        source = sr.Microphone(sample_rate=16000)
+    main(source)
