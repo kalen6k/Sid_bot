@@ -463,12 +463,12 @@ while (True):
             print(command)
             destination = action_dictionary['desk_destination'] # Destination bench will be stored in this variable
             print(destination)
-            message = action_dictionary['message'] # Message will be stored in this variable
-            part = action_dictionary['part_requested'] # Part will be stored in this variable
+            #message = action_dictionary['message'] # Message will be stored in this variable
+            #part = action_dictionary['part_requested'] # Part will be stored in this variable
             print('Command:', command)
             print(' Destination:', destination)
-            print(' Message:', message)
-            print(' Part:', part)
+            #print(' Message:', message)
+            #print(' Part:', part)
             print('\n')
             # old_ear.py will give these three inputs
             failed = False
