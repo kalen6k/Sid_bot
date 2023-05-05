@@ -11,6 +11,13 @@ import board
 import adafruit_bno055
 from hcsr04sensor import sensor
 
+# Robot states
+IDLE = 0
+GETTING_MESSAGE = 1
+DELIVERING = 2
+FETCHING_1 = 3
+FETCHING_2 = 4
+
 
 # For car orientation and driving direction
 FORWARD = 0
@@ -41,6 +48,8 @@ HE_TICKS_IN_TURN = 26 # Number of Hall effect ticks in a 90 degree turn
 
 # Additional space needed for turns
 TURN_MARGIN = 3 # 1.5 in reality
+
+SCALE_THRESHOLD = 4500 # Needs to be adjusted
 
 # Coordinates in feet
 benchX = {}
@@ -364,21 +373,24 @@ homeX = -1
 homeY = 21.5
 currentX = homeX
 
-idle = True
+state = IDLE
 while (True):
     # Idle at home
 
-    # Wait for voice input
+    # Wait for voice input (call to desk)
+    #
+    #
     #
     time.sleep(3)
     #
     #
     destination = '408' # Destination bench will be stored in this variable
-    
+    state = GETTING_MESSAGE
+
+
     destX = benchX[destination]
     destY = benchY[destination]
 
-    idle = False
     if (destX <= posX):
         if orientation == FORWARD:
             drive(BACKWARD, HORIZONTAL, targetX=destX-TURN_MARGIN+1, targetY=homeY) # Drive backwards until slightly passed row
@@ -401,18 +413,49 @@ while (True):
     currentX = destX
 
     # Visit benches and ask for input until idle
-    while not idle:
-        # Wait for voice input
-        #
-        #
-        #
-        #
-        # If there is no new destination idle is set to true
-        time.sleep(3)
-        idle = True
-        destination = '211' # Destination bench will be stored in this variable
+    while state != IDLE:
+        if state == GETTING_MESSAGE:
+            # Wait for voice input (get action)
+            #
+            # Use ear scrip
+            #
+            #
+            #
+            time.sleep(3)
+            # old_ear.py will give these three inputs
+            failed = False
+            command = 'Deliver' # Command will be 'Deliver' or 'Request'
+            destination = '211'
+
+            if failed:
+                state = IDLE
+            else:
+                if command == 'Deliver':
+                    while weight < SCALE_THRESHOLD:
+                        time.sleep(0.5)
+                    state = DELIVERING
+                if command == 'Fetch':
+                    state = FETCHING_1
+        if state == DELIVERING:
+            while weight < SCALE_THRESHOLD:
+                time.sleep(0.5)
+            state = IDLE
+        if state == FETCHING_1:
+            # Say what we are fetching
+            #
+            #
+            #
+            while weight < SCALE_THRESHOLD:
+                time.sleep(0.5)
+            state = FETCHING_2
+        if state == FETCHING_2:
+            while weight >= SCALE_THRESHOLD:
+                time.sleep(0.5)
+            state = IDLE
         
-        if not idle:
+        time.sleep(1.5)
+
+        if state != IDLE:
             destX = benchX[destination]
             destY = benchY[destination]
 
