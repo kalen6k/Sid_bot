@@ -390,8 +390,8 @@ while False:
     print('')
     time.sleep(1)
 
-homeX = 19#-1
-homeY = 21
+homeX = -14#-1
+homeY = 21.5
 currentX = homeX
 message = ""
 part = ""
@@ -436,11 +436,12 @@ while (True):
     stop()
     currentX = destX
     print('At first destination')
-
+    request_return_dest = 0
     # Visit benches and ask for input until idle
     while state != IDLE:
         print('At new destination')
         if state == FETCH:
+            oldDestination = destination
             # Wait for voice input (get action)
             #
             action_dictionary = ear(state)
@@ -464,11 +465,12 @@ while (True):
                 state = IDLE
             else:
                 if command == 'send_part':
-                    while weight < SCALE_THRESHOLD:     
+                    while weight < SCALE_THRESHOLD:
                         time.sleep(0.5)
                     state = DELIVERING_PART
                 if command == 'request_part':
                     state = REQUEST_1
+                    request_return_dest = oldDestination
                 if command == 'send_message':
                     state == DELIVERING_MESSAGE
         elif state == DELIVERING_PART:
@@ -486,6 +488,7 @@ while (True):
             while weight < SCALE_THRESHOLD:
                 time.sleep(0.5)
             state = REQUEST_2
+            destination = request_return_dest
         elif state == REQUEST_2:
             print('Request 2')
             while weight >= SCALE_THRESHOLD:
