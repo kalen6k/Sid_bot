@@ -9,10 +9,10 @@ from queue import Queue
 from tempfile import NamedTemporaryFile
 from time import sleep
 from sys import platform
-from gpt_ctrl import controller, announce_action
+from gpt_ctrl import idle_controller, fetched_controller, announce_action
 from mouth import speak
 
-def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4, default_microphone: str = 'pulse'):
+def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4, state: str = 'idle'):
     # this works if your default microphone is set correctly
     source = sr.Microphone(sample_rate=16000)
     # The last time a recording was retreived from the queue.
@@ -55,8 +55,8 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
     
     
     recorder.listen_in_background(source, record_callback, phrase_time_limit=record_timeout)
-
-
+    start_time = datetime.utcnow()
+    
     while True:
         try:
             now = datetime.utcnow()
@@ -87,32 +87,36 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
                     f.setsampwidth(2)
                     f.setframerate(16000)
                     f.writeframes(wav_data.read())
+                
+                if now - start_time > timedelta(seconds=1.5):
+                    # Read the transcription.
+                    result = whisperAPI(temp_file)
+                    text = result['text'].strip()
 
-                # Read the transcription.
-                result = whisperAPI(temp_file)
-                text = result['text'].strip()
+                    # If we detected a pause between recordings, add a new item to our transcripion.
+                    # Otherwise edit the existing one.
+                    if phrase_complete:
+                        # remove the text before the occurence of "Sid" in the transcription
+                        # this is to only process the text once the user says "Sid"
+                        if text.find("Sid") != -1:
+                            text = text[text.find("Sid"):]
+                            if state == 'idle':
+                                action = idle_controller(text)
+                            elif state == 'fetched':
+                                action = fetched_controller(text)
+                            speak(announce_action(action))
+                            transcription.append(text)
+                            transcription_lines+=1
+                        
+                    else:
+                        transcription[-1] = text
 
-                # If we detected a pause between recordings, add a new item to our transcripion.
-                # Otherwise edit the existing one.
-                if phrase_complete:
-                    # remove the text before the occurence of "Sid" in the transcription
-                    # this is to only process the text once the user says "Sid"
-                    if text.find("Sid") != -1:
-                        text = text[text.find("Sid"):]
-                        action = controller(text)
-                        speak(announce_action(action))
-                        transcription.append(text)
-                        transcription_lines+=1
-                    
-                else:
-                    transcription[-1] = text
-
-                # Clear the console to reprint the updated transcription.
-                os.system('cls' if os.name=='nt' else 'clear')
-                for line in transcription:
-                    print(line)
-                # Flush stdout.
-                print('', end='', flush=True)
+                    # Clear the console to reprint the updated transcription.
+                    os.system('cls' if os.name=='nt' else 'clear')
+                    for line in transcription:
+                        print(line)
+                    # Flush stdout.
+                    print('', end='', flush=True)
 
                 # Infinite loops are bad for processors, must sleep.
                 sleep(0.25)
