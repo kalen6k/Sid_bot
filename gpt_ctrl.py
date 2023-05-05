@@ -36,13 +36,13 @@ def fetched_controller(
 def announce_action(action_dict):
   action = action_dict.get('action')
   desk_destination = action_dict.get('desk_destination')
-  part = action_dict.get('part_requested')
+  
   
 
   if action == 'fetch':
       announcement = f"Ok. I will head over to desk {desk_destination}."
   elif action == 'send_part':
-      announcement = f"Ok. I am going to ask desk {desk_destination} for the {part}."
+      announcement = f"Ok. I will take it to desk {desk_destination}."
   else:
-      announcement = "No action specified."
+      announcement = "I am sorry, I did not catch that."
   return announcement
