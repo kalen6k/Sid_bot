@@ -459,7 +459,7 @@ while (True):
             #
             #
             #
-            command = action_dictionary['action'] # Command will be 'send_part', 'request_part', 'send_message'
+            command = 'send_part' # Command will be 'send_part', 'request_part', 'send_message'
             print(command)
             destination = action_dictionary['desk_destination'] # Destination bench will be stored in this variable
             print(destination)

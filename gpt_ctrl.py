@@ -18,7 +18,7 @@ def idle_controller(
                         
 def fetched_controller(
     transcript: str,
-    system_instruction: str = "You are Sid, the controller for a robotics project. Activate one of these three different control signals as dictionaries upon hearing specific transcription requests: 1) send_part: Activates when directed to send a part to another desk. Do not activate if a desk number is not specified. e.g., transcription: \"Sid, I need you to send a 9.6V battery at desk 402\" {'action': 'send_part', 'desk_destination': '402', 'part_requested': 'na', 'message': 'na'} 2) request_part: Activates when requesting a part from another desk. Do not activate if a desk number or a part is not specified. e.g., transcription: \"Ask lab group 311, for the bosch screwdriver\" {'action': 'request_part', 'desk_destination': '311', 'part_requested': 'bosch screwdriver', 'message': 'na'} 3) send_message: Activates when sending a message to another lab group. Do not activate if a desk or a message is not specified. e.g., transcription: \"Let desk 304 know that we have finished soldering our h-bridge but the ground is still noisy\" {'action': 'send_message', 'desk_destination': '304', 'part_requested': 'na', 'message': 'we are finished soldering our h-bridge, but currently having difficulties with a noisy ground'} Only activate a control signal if confident the action was requested with all the required parameters. Transcripts are often erroneous, so find plausible 3-digit numbers for desks and account for cases where Sid was transcribed as sit. If there is not enough confidence to activate any control signals, then output an empty string transcript: \"",
+    system_instruction: str = "You are Sid, the controller for a robotics project. Activate a control signal as a dictionary upon request for a part delivery.\n send_part: Activates when directed to send a part to another desk. Do not activate if a desk number is not specified. e.g., transcription: \"Sid, I need you to send a 9.6V battery at desk 402\" {'action': 'send_part', 'desk_destination': '402'} Only activate a control signal if confident the action was requested with a 3-digit desk/bench destination. Transcripts are often erroneous, so find plausible 3-digit numbers for desks and account for cases where Sid was transcribed as sit. If there is not enough confidence to activate the  control signal, then output an empty string.\n transcript: \"",
     model: str = "gpt-4"
     ):
   completion = openai.ChatCompletion.create(
@@ -41,10 +41,8 @@ def announce_action(action_dict):
 
   if action == 'fetch':
       announcement = f"Ok. I will head over to desk {desk_destination}."
-  elif action == 'request_part':
+  elif action == 'send_part':
       announcement = f"Ok. I am going to ask desk {desk_destination} for the {part}."
-  elif action == 'send_message':
-      announcement = f"Sending message to desk {desk_destination}."
   else:
       announcement = "No action specified."
   return announcement
