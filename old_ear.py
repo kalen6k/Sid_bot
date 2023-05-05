@@ -107,46 +107,47 @@ def ear(state, energy_threshold: int = 1300, record_timeout: float = 2, phrase_t
                     if phrase_complete:
                         transcription.append(text)
                         transcription_line+=1
-                        if not action_recieved:
-                            # remove the text before the occurence of "Sid" in the transcription
-                            # this is to only process the text once the user says "Sid"
-                            sit_index = text.find("Sit")
-                            sid_index = text.find("Sid")
-                            index = 0
-                            if sid_index != -1 or sit_index != -1:
-                                if sid_index == -1:
-                                    index = sit_index
-                                else:
-                                    index = sid_index
-                                speak("hmmmmmmm")
-                                text = text[index:]
-                                if state == IDLE:
-                                    action_str = idle_controller(text)
-                                    try:
-                                        print("try")
-                                        if action_str == "":
-                                            raise Exception
-                                        action_dict = ast.literal_eval(action_str)
-                                        print("action_confirmed")
-                                        action_recieved = True
-                                        speak(announce_action(action_dict))
-                                        return action_dict
-                                    except:
-                                        print("except")
-                                        action_dict = []
-                                elif state == FETCH:
-                                    action_str = fetched_controller(text)
-                                    try:
-                                        action_dict = ast.literal_eval(action_str)
-                                        print("action_confirmed")
-                                        action_recieved = True
-                                        speak(announce_action(action_dict))
-                                        return action_dict
-                                    except:
-                                        action_dict = []
                     else:
                         transcription[-1] = text
 
+                    if not action_recieved:
+                        # remove the text before the occurence of "Sid" in the transcription
+                        # this is to only process the text once the user says "Sid"
+                        text = transcription[transcription_line - 1]
+                        sit_index = text.find("Sit")
+                        sid_index = text.find("Sid")
+                        index = 0
+                        if sid_index != -1 or sit_index != -1:
+                            if sid_index == -1:
+                                index = sit_index
+                            else:
+                                index = sid_index
+                            speak("hmmmmmmm")
+                            text = text[index:]
+                            if state == IDLE:
+                                action_str = idle_controller(text)
+                                try:
+                                    print("try")
+                                    if action_str == "":
+                                        raise Exception
+                                    action_dict = ast.literal_eval(action_str)
+                                    print("action_confirmed")
+                                    action_recieved = True
+                                    speak(announce_action(action_dict))
+                                    return action_dict
+                                except:
+                                    print("except")
+                                    action_dict = []
+                            elif state == FETCH:
+                                action_str = fetched_controller(text)
+                                try:
+                                    action_dict = ast.literal_eval(action_str)
+                                    print("action_confirmed")
+                                    action_recieved = True
+                                    speak(announce_action(action_dict))
+                                    return action_dict
+                                except:
+                                    action_dict = []
                     # Clear the console to reprint the updated transcription.
                     #os.system('cls' if os.name=='nt' else 'clear')
                     print(transcription[transcription_line])
