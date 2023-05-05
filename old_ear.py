@@ -8,11 +8,11 @@ from datetime import datetime, timedelta
 from queue import Queue
 from tempfile import NamedTemporaryFile
 from time import sleep
-from sys import platform
 from gpt_ctrl import idle_controller, fetched_controller, announce_action
-from mouth import speak
+from smart_mouth import speak
+import ast
 
-def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4, state: str = 'idle'):
+def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4):
     # this works if your default microphone is set correctly
     source = sr.Microphone(sample_rate=16000)
     # The last time a recording was retreived from the queue.
@@ -29,7 +29,7 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
 
     temp_file = NamedTemporaryFile(suffix='.wav', delete = False).name
     transcription = ['']
-    transcription_lines = 0
+    action_dict = []
     with source as temp_source:
         recorder.adjust_for_ambient_noise(temp_source)
         
@@ -49,7 +49,6 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
         openai.api_key = os.getenv('OPENAI_API_KEY')
         audio_file = open(filename, "rb")
         transcript = openai.Audio.transcribe("whisper-1", audio_file)
-        print("hello")
         return transcript
     
     
@@ -96,25 +95,43 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
                     # If we detected a pause between recordings, add a new item to our transcripion.
                     # Otherwise edit the existing one.
                     if phrase_complete:
-                        # remove the text before the occurence of "Sid" in the transcription
-                        # this is to only process the text once the user says "Sid"
-                        if text.find("Sid") != -1:
-                            text = text[text.find("Sid"):]
-                            if state == 'idle':
-                                action = idle_controller(text)
-                            elif state == 'fetched':
-                                action = fetched_controller(text)
-                            speak(announce_action(action))
-                            transcription.append(text)
-                            transcription_lines+=1
-                        
+                        if action_dict != []:
+                            # remove the text before the occurence of "Sid" in the transcription
+                            # this is to only process the text once the user says "Sid"
+                            if text.find("Sid") != -1:
+                                text = text[text.find("Sid"):]
+                                if state == 'idle':
+                                    action_str = idle_controller(text)
+                                    try:
+                                        action_dict = ast.literal_eval(action_str)
+                                    except:
+                                        action_dict = []
+                                elif state == 'fetched':
+                                    action_str = fetched_controller(text)
+                                    try:
+                                        action_dict = ast.literal_eval(action_str)
+                                    except:
+                                        action_dict = []
+                                if action_dict != []:
+                                    speak(announce_action(action_dict))
+                                #transcription.append(text)
+                                
+                            
+                        else:
+                            if text.find("yes") or text.find("yeah") or text.find("yep") or text.find("sure") or text.find("correct"):
+                                print("action_confirmed")
+                                return action_dict
+                            elif text.find("no") or text.find("nope") or text.find("nah") or text.find("wrong"):
+                                action_dict = []
+                                print("action_discarded")
+                               
                     else:
                         transcription[-1] = text
 
                     # Clear the console to reprint the updated transcription.
-                    os.system('cls' if os.name=='nt' else 'clear')
-                    for line in transcription:
-                        print(line)
+                    #os.system('cls' if os.name=='nt' else 'clear')
+                    #for line in transcription:
+                        #print(line)
                     # Flush stdout.
                     print('', end='', flush=True)
 
@@ -129,4 +146,4 @@ def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout:
 
 
 if __name__ == "__main__":
-    main()
+    ear()
