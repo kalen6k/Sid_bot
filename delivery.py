@@ -150,6 +150,9 @@ def HE_callback(gpio, level, tick):
 #             print('Turn right backward')
 
 def turn(turnDir, driveDir):
+    return
+    print(posX)
+    print(posY)
     if turnDir == LEFT:
         if driveDir == FORWARD:
             print('Turn left forward')
@@ -208,6 +211,7 @@ def turn(turnDir, driveDir):
 #                 pass
 
 def drive(direction, axis, targetX, targetY):
+    return
     if (ultrasonicDist < 50):
         waitObstacle()
     condition = True
@@ -416,7 +420,9 @@ while (True):
     print(destY)
     print()
     if (destX <= posX):
+    
         if orientation == FORWARD:
+           
             drive(BACKWARD, HORIZONTAL, targetX=destX-TURN_MARGIN-1, targetY=homeY) # Drive backwards until slightly passed row
             stopReverse()
             turn(LEFT, FORWARD) # Turn left
@@ -425,6 +431,9 @@ while (True):
             turn(RIGHT, FORWARD) # Turn right
             orientation = FORWARD
     else:
+   
+        print(f"Position X: {posX}")
+        print(f"Position Y: {posY}")
         if orientation == FORWARD:
             drive(FORWARD, HORIZONTAL, targetX=destX-TURN_MARGIN, targetY=homeY) # Drive forwards until reach row
             turn(LEFT, FORWARD) # Turn left
@@ -433,7 +442,7 @@ while (True):
             stopReverse()
             turn(RIGHT, FORWARD) # Turn right
             orientation = FORWARD
-
+   
     drive(FORWARD, VERTICAL, targetX=destX, targetY=destY) # Drive forward to bench
     stop()
     currentX = destX
@@ -451,7 +460,9 @@ while (True):
             #
             #
             command = action_dictionary['action'] # Command will be 'send_part', 'request_part', 'send_message'
+            print(command)
             destination = action_dictionary['desk_destination'] # Destination bench will be stored in this variable
+            print(destination)
             message = action_dictionary['message'] # Message will be stored in this variable
             part = action_dictionary['part_requested'] # Part will be stored in this variable
             print('Command:', command)

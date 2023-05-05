@@ -20,7 +20,7 @@ REQUEST_1 = 3
 REQUEST_2 = 4
 DELIVERING_MESSAGE = 5
 
-def ear(state, energy_threshold: int = 1300, record_timeout: float = 2, phrase_timeout: float = 1.2):
+def ear(state, energy_threshold: int = 1800, record_timeout: float = 2, phrase_timeout: float = 1.2):
     # this works if your default microphone is set correctly
     source = sr.Microphone(sample_rate=16000)
     # The last time a recording was retreived from the queue.
@@ -113,7 +113,7 @@ def ear(state, energy_threshold: int = 1300, record_timeout: float = 2, phrase_t
                     if not action_recieved:
                         # remove the text before the occurence of "Sid" in the transcription
                         # this is to only process the text once the user says "Sid"
-                        text = transcription[transcription_line - 1]
+                        text = transcription[transcription_line]
                         sit_index = text.find("Sit")
                         sid_index = text.find("Sid")
                         index = 0
@@ -125,6 +125,8 @@ def ear(state, energy_threshold: int = 1300, record_timeout: float = 2, phrase_t
                             speak("hmmmmmmm")
                             text = text[index:]
                             if state == IDLE:
+                                print("in idle ctrl")
+                                print(text)
                                 action_str = idle_controller(text)
                                 try:
                                     print("try")
@@ -136,9 +138,12 @@ def ear(state, energy_threshold: int = 1300, record_timeout: float = 2, phrase_t
                                     speak(announce_action(action_dict))
                                     return action_dict
                                 except:
+                                    action_recieved = False
                                     print("except")
                                     action_dict = []
                             elif state == FETCH:
+                                print("in fetch ctrl")
+                                print(text)
                                 action_str = fetched_controller(text)
                                 try:
                                     action_dict = ast.literal_eval(action_str)
@@ -147,6 +152,8 @@ def ear(state, energy_threshold: int = 1300, record_timeout: float = 2, phrase_t
                                     speak(announce_action(action_dict))
                                     return action_dict
                                 except:
+                                    action_recieved = False
+                                    print("except")
                                     action_dict = []
                     # Clear the console to reprint the updated transcription.
                     #os.system('cls' if os.name=='nt' else 'clear')
