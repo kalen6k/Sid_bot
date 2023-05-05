@@ -36,7 +36,7 @@ def fetched_controller(
 def announce_action(action_dict):
   action = action_dict.get('action')
   desk_destination = action_dict.get('desk_destination')
-  part = action_dict.get('part')
+  part = action_dict.get('part_requested')
   
 
   if action == 'fetch':

@@ -10,6 +10,8 @@ from hx711 import HX711
 import board
 import adafruit_bno055
 from hcsr04sensor import sensor
+from old_ear import ear
+import ast
 
 # Robot states
 IDLE = 0
@@ -391,7 +393,8 @@ while False:
 homeX = 19#-1
 homeY = 21
 currentX = homeX
-
+message = ""
+part = ""
 state = IDLE
 while (True):
     print('At home')
@@ -401,10 +404,9 @@ while (True):
     #
     #
     #
-    time.sleep(3)
-    #
-    #
-    destination = '405' # Destination bench will be stored in this variable
+    action_dict = ear(state)
+    destination = action_dict['destination'] # Destination bench will be stored in this variable
+    print('Destination:', destination)
     state = FETCH
 
 
@@ -441,26 +443,33 @@ while (True):
         if state == FETCH:
             # Wait for voice input (get action)
             #
-            # Use ear scrip
+            action_dictionary = ear(state)
             #
             #
             #
-            time.sleep(3)
+            command = action_dictionary['action'] # Command will be 'send_part', 'request_part', 'send_message'
+            destination = action_dictionary['desk_destination'] # Destination bench will be stored in this variable
+            message = action_dictionary['message'] # Message will be stored in this variable
+            part = action_dictionary['part_requested'] # Part will be stored in this variable
+            print('Command:', command)
+            print(' Destination:', destination)
+            print(' Message:', message)
+            print(' Part:', part)
+            print('\n')
             # old_ear.py will give these three inputs
             failed = False
-            command = 'Deliver Part' # Command will be 'Deliver Part', 'Request Part', 'Deliver
-            destination = '207'
+             # Command will be 'send_part', 'request_part', 'send_message'
 
             if failed:
                 state = IDLE
             else:
-                if command == 'Deliver Part':
+                if command == 'send_part':
                     while weight < SCALE_THRESHOLD:     
                         time.sleep(0.5)
                     state = DELIVERING_PART
-                if command == 'Request Part':
+                if command == 'request_part':
                     state = REQUEST_1
-                if command == 'Deliver Message':
+                if command == 'send_message':
                     state == DELIVERING_MESSAGE
         elif state == DELIVERING_PART:
             print('Delivering Part')

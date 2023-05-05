@@ -12,6 +12,14 @@ from gpt_ctrl import idle_controller, fetched_controller, announce_action
 from smart_mouth import speak
 import ast
 
+# Robot states
+IDLE = 0
+FETCH = 1
+DELIVERING_PART = 2
+REQUEST_1 = 3
+REQUEST_2 = 4
+DELIVERING_MESSAGE = 5
+
 def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4):
     # this works if your default microphone is set correctly
     source = sr.Microphone(sample_rate=16000)
@@ -100,13 +108,13 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
                             # this is to only process the text once the user says "Sid"
                             if text.find("Sid") != -1:
                                 text = text[text.find("Sid"):]
-                                if state == 'idle':
+                                if state == IDLE:
                                     action_str = idle_controller(text)
                                     try:
                                         action_dict = ast.literal_eval(action_str)
                                     except:
                                         action_dict = []
-                                elif state == 'fetched':
+                                elif state == FETCH:
                                     action_str = fetched_controller(text)
                                     try:
                                         action_dict = ast.literal_eval(action_str)
