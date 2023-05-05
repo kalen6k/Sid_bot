@@ -388,12 +388,13 @@ while False:
     print('')
     time.sleep(1)
 
-homeX = 21#-1
+homeX = 19#-1
 homeY = 21
 currentX = homeX
 
 state = IDLE
 while (True):
+    print('At home')
     # Idle at home
 
     # Wait for voice input (call to desk)
@@ -416,7 +417,7 @@ while (True):
             stopReverse()
             turn(LEFT, FORWARD) # Turn left
         else:
-            drive(FORWARD, HORIZONTAL, targetX=destX+TURN_MARGIN, targetY=homeY) # Drive forwards until reach row
+            drive(FORWARD, HORIZONTAL, targetX=destX+TURN_MARGIN-1, targetY=homeY) # Drive forwards until reach row
             turn(RIGHT, FORWARD) # Turn right
             orientation = FORWARD
     else:
@@ -432,9 +433,11 @@ while (True):
     drive(FORWARD, VERTICAL, targetX=destX, targetY=destY) # Drive forward to bench
     stop()
     currentX = destX
+    print('At first destination')
 
     # Visit benches and ask for input until idle
     while state != IDLE:
+        print('At new destination')
         if state == FETCH:
             # Wait for voice input (get action)
             #
@@ -480,6 +483,7 @@ while (True):
                 time.sleep(0.5)
             state = IDLE
         elif state == DELIVERING_MESSAGE:
+            print('Deliver Message')
             #
             # Deliver message with mouth module
             #
@@ -501,8 +505,6 @@ while (True):
                 drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN+2) # Drive backwards to line
 
                 if destX < currentX:
-                    print("test1")
-                    drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN+2) # Drive backwards to line
                     turn(RIGHT, BACKWARD)
                     stopReverse()
                     orientation = BACKWARD
@@ -510,7 +512,6 @@ while (True):
                     turn(RIGHT, FORWARD)
                     orientation = FORWARD
                 else:
-                    drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN+3) # Drive backwards to line
                     turn(LEFT, BACKWARD)
                     stopReverse()
                     orientation = FORWARD
@@ -521,17 +522,17 @@ while (True):
 
             currentX = destX
 
-        # Go home when no more destinations
-        drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN) # Drive backwards to line
-        if homeX < posX:
-            print("test2")
-            turn(RIGHT, BACKWARD)
-            stopReverse()
-            orientation = BACKWARD
-            drive(FORWARD, HORIZONTAL, targetX=homeX, targetY=homeY) # Drive forward to home
-        else:
-            turn(LEFT, BACKWARD)
-            stopReverse()
-            orientation = FORWARD
-            drive(FORWARD, HORIZONTAL, targetX=homeX, targetY=homeY) # Drive forward to home
-        stop()
+    # Go home when no more destinations
+    print('Going Home')
+    drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN+2) # Drive backwards to line
+    if homeX < posX:
+        turn(RIGHT, BACKWARD)
+        stopReverse()
+        orientation = BACKWARD
+        drive(FORWARD, HORIZONTAL, targetX=homeX, targetY=homeY) # Drive forward to home
+    else:
+        turn(LEFT, BACKWARD)
+        stopReverse()
+        orientation = FORWARD
+        drive(FORWARD, HORIZONTAL, targetX=homeX, targetY=homeY) # Drive forward to home
+    stop()
