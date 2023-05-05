@@ -20,7 +20,7 @@ REQUEST_1 = 3
 REQUEST_2 = 4
 DELIVERING_MESSAGE = 5
 
-def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 1):
+def ear(state, energy_threshold: int = 1300, record_timeout: float = 2, phrase_timeout: float = 1.2):
     # this works if your default microphone is set correctly
     source = sr.Microphone(sample_rate=16000)
     # The last time a recording was retreived from the queue.
@@ -37,6 +37,7 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
 
     temp_file = NamedTemporaryFile(suffix='.wav', delete = False).name
     transcription = ['']
+    transcription_line = 0
     action_dict = []
     action_recieved = False
     with source as temp_source:
@@ -96,7 +97,7 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
                     f.setframerate(16000)
                     f.writeframes(wav_data.read())
                 
-                if now - start_time > timedelta(seconds=1.5):
+                if now - start_time > timedelta(seconds=1):
                     # Read the transcription.
                     result = whisperAPI(temp_file)
                     text = result['text'].strip()
@@ -104,21 +105,34 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
                     # If we detected a pause between recordings, add a new item to our transcripion.
                     # Otherwise edit the existing one.
                     if phrase_complete:
+                        transcription.append(text)
+                        transcription_line+=1
                         if not action_recieved:
                             # remove the text before the occurence of "Sid" in the transcription
                             # this is to only process the text once the user says "Sid"
-                            if text.find("Sid") != -1:
+                            sit_index = text.find("Sit")
+                            sid_index = text.find("Sid")
+                            index = 0
+                            if sid_index != -1 or sit_index != -1:
+                                if sid_index == -1:
+                                    index = sit_index
+                                else:
+                                    index = sid_index
                                 speak("hmmmmmmm")
-                                text = text[text.find("Sid"):]
+                                text = text[index:]
                                 if state == IDLE:
                                     action_str = idle_controller(text)
                                     try:
+                                        print("try")
+                                        if action_str == "":
+                                            raise Exception
                                         action_dict = ast.literal_eval(action_str)
                                         print("action_confirmed")
                                         action_recieved = True
                                         speak(announce_action(action_dict))
                                         return action_dict
                                     except:
+                                        print("except")
                                         action_dict = []
                                 elif state == FETCH:
                                     action_str = fetched_controller(text)
@@ -130,14 +144,12 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
                                         return action_dict
                                     except:
                                         action_dict = []
-                                #transcription.append(text)
                     else:
                         transcription[-1] = text
 
                     # Clear the console to reprint the updated transcription.
                     #os.system('cls' if os.name=='nt' else 'clear')
-                    #for line in transcription:
-                        #print(line)
+                    print(transcription[transcription_line])
                     # Flush stdout.
                     print('', end='', flush=True)
 

@@ -1,7 +1,7 @@
 import openai
 def idle_controller(
         transcript: str,
-        system_instruction : str = "You are Sid, a controller for a robotics project. Listen for transcription requests with your name, desk/bench number, and a fetching verb (e.g., need, go). If all required elements are present, activate fetching control signal and output a dictionary, e.g., transcription: \"Sid, I need you at desk 402.\" {'action': 'fetch', 'desk_destination': '402'}. Be flexible with sentence structures and synonyms. If unsure, output an empty string. Respond with a dictionary or empty string only. transcript: \"",
+        system_instruction : str = "You are Sid, a controller for a robotics project. Listen for transcription requests with your name, a 3 digit desk/bench number, and a fetching verb (e.g., need, go). If all required elements are present, activate fetching control signal and output a dictionary, e.g., transcription: \"Sid, I need you at desk 402.\" {'action': 'fetch', 'desk_destination': '402'}. Be flexible with sentence structures and synonyms. If unsure, output an empty string. Respond with a dictionary or empty string only. transcript \"",
         model: str = "gpt-4",
         ):
     completion = openai.ChatCompletion.create(
@@ -40,11 +40,11 @@ def announce_action(action_dict):
   
 
   if action == 'fetch':
-      announcement = f"Ok. I will head over to desk {desk_destination}. Correct?"
+      announcement = f"Ok. I will head over to desk {desk_destination}."
   elif action == 'request_part':
-      announcement = f"Ok. I am going to ask desk {desk_destination} for the {part}. Correct?"
+      announcement = f"Ok. I am going to ask desk {desk_destination} for the {part}."
   elif action == 'send_message':
-      announcement = f"Sending message to desk {desk_destination}. Correct?"
+      announcement = f"Sending message to desk {desk_destination}."
   else:
       announcement = "No action specified."
   return announcement

@@ -390,8 +390,8 @@ while False:
     print('')
     time.sleep(1)
 
-homeX = -14#-1
-homeY = 21.5
+homeX = 13
+homeY = 22
 currentX = homeX
 message = ""
 part = ""
@@ -405,14 +405,16 @@ while (True):
     #
     #
     action_dict = ear(state)
-    destination = action_dict['destination'] # Destination bench will be stored in this variable
+    destination = action_dict['desk_destination'] # Destination bench will be stored in this variable
     print('Destination:', destination)
     state = FETCH
 
 
     destX = benchX[destination]
     destY = benchY[destination]
-
+    print(destX)
+    print(destY)
+    print()
     if (destX <= posX):
         if orientation == FORWARD:
             drive(BACKWARD, HORIZONTAL, targetX=destX-TURN_MARGIN-1, targetY=homeY) # Drive backwards until slightly passed row

@@ -1,2 +1,3 @@
-sid_bot_venv
+syd_bot_venv
 .env
+__pycache__/gpt_ctrl.cpython-39.pyc
