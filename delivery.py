@@ -32,7 +32,7 @@ VERTICAL = 5
 
 ## These need to be tuned
 KP_STEER_ANGLE = 20
-KI_STEER_ANGLE = 1
+KI_STEER_ANGLE = 0#1
 KP_STEER_POS = 5
 
 CONSTANT_MOTOR = 50
@@ -389,7 +389,7 @@ while False:
     time.sleep(1)
 
 homeX = 21#-1
-homeY = 21.5
+homeY = 21
 currentX = homeX
 
 state = IDLE
@@ -412,7 +412,7 @@ while (True):
 
     if (destX <= posX):
         if orientation == FORWARD:
-            drive(BACKWARD, HORIZONTAL, targetX=destX-TURN_MARGIN+1, targetY=homeY) # Drive backwards until slightly passed row
+            drive(BACKWARD, HORIZONTAL, targetX=destX-TURN_MARGIN-1, targetY=homeY) # Drive backwards until slightly passed row
             stopReverse()
             turn(LEFT, FORWARD) # Turn left
         else:
@@ -445,23 +445,28 @@ while (True):
             time.sleep(3)
             # old_ear.py will give these three inputs
             failed = False
-            command = 'Deliver' # Command will be 'Deliver' or 'Request'
-            destination = '407'
+            command = 'Deliver Part' # Command will be 'Deliver Part', 'Request Part', 'Deliver
+            destination = '207'
 
             if failed:
                 state = IDLE
             else:
-                if command == 'Deliver':
+                if command == 'Deliver Part':
                     while weight < SCALE_THRESHOLD:     
                         time.sleep(0.5)
                     state = DELIVERING_PART
-                if command == 'Fetch':
+                if command == 'Request Part':
                     state = REQUEST_1
-        if state == DELIVERING_PART:
+                if command == 'Deliver Message':
+                    state == DELIVERING_MESSAGE
+        elif state == DELIVERING_PART:
+            print('Delivering Part')
             while weight < SCALE_THRESHOLD:
                 time.sleep(0.5)
             state = IDLE
-        if state == REQUEST_1:
+            time.sleep(2)
+        elif state == REQUEST_1:
+            print('Request 1')
             # Say what we are fetching
             #
             #
@@ -469,11 +474,12 @@ while (True):
             while weight < SCALE_THRESHOLD:
                 time.sleep(0.5)
             state = REQUEST_2
-        if state == REQUEST_2:
+        elif state == REQUEST_2:
+            print('Request 2')
             while weight >= SCALE_THRESHOLD:
                 time.sleep(0.5)
             state = IDLE
-        if state == DELIVERING_MESSAGE:
+        elif state == DELIVERING_MESSAGE:
             #
             # Deliver message with mouth module
             #
@@ -491,9 +497,12 @@ while (True):
                 else:
                     drive(BACKWARD, VERTICAL, targetX=destX, targetY=destY) # Drive backwards until close to destination
             else:
-                drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN+3) # Drive backwards to line
+            
+                drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN+2) # Drive backwards to line
 
                 if destX < currentX:
+                    print("test1")
+                    drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN+2) # Drive backwards to line
                     turn(RIGHT, BACKWARD)
                     stopReverse()
                     orientation = BACKWARD
@@ -501,6 +510,7 @@ while (True):
                     turn(RIGHT, FORWARD)
                     orientation = FORWARD
                 else:
+                    drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN+3) # Drive backwards to line
                     turn(LEFT, BACKWARD)
                     stopReverse()
                     orientation = FORWARD
@@ -514,6 +524,7 @@ while (True):
         # Go home when no more destinations
         drive(BACKWARD, VERTICAL, targetX=currentX, targetY=homeY+TURN_MARGIN) # Drive backwards to line
         if homeX < posX:
+            print("test2")
             turn(RIGHT, BACKWARD)
             stopReverse()
             orientation = BACKWARD
