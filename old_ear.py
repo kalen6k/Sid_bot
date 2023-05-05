@@ -12,8 +12,9 @@ from sys import platform
 from gpt_ctrl import controller, announce_action
 from mouth import speak
 
-def main(source, energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4):
-    
+def main(energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4, default_microphone: str = 'pulse'):
+    # this works if your default microphone is set correctly
+    source = sr.Microphone(sample_rate=16000)
     # The last time a recording was retreived from the queue.
     phrase_time = None
     # Current raw audio bytes.
@@ -38,8 +39,11 @@ def main(source, energy_threshold: int = 600, record_timeout: float = 2, phrase_
         audio: An AudioData containing the recorded bytes.
         """
         # Grab the raw bytes and push it into the thread safe queue.
-        data = audio.get_raw_data()
-        data_queue.put(data)
+        try:
+            data = audio.get_raw_data()
+            data_queue.put(data)
+        except Exception as e:
+            print(f"Error in record_callback: {e}")
     
     def whisperAPI(filename):
         openai.api_key = os.getenv('OPENAI_API_KEY')
@@ -93,11 +97,12 @@ def main(source, energy_threshold: int = 600, record_timeout: float = 2, phrase_
                 if phrase_complete:
                     # remove the text before the occurence of "Sid" in the transcription
                     # this is to only process the text once the user says "Sid"
-                    text = text[text.find("Sid"):]
-                    action = controller(text)
-                    speak(announce_action(action))
-                    transcription.append(text)
-                    transcription_lines+=1
+                    if text.find("Sid") != -1:
+                        text = text[text.find("Sid"):]
+                        action = controller(text)
+                        speak(announce_action(action))
+                        transcription.append(text)
+                        transcription_lines+=1
                     
                 else:
                     transcription[-1] = text
@@ -120,21 +125,4 @@ def main(source, energy_threshold: int = 600, record_timeout: float = 2, phrase_
 
 
 if __name__ == "__main__":
-    default_microphone: str = 'pulse'
-    # Important for linux users. 
-    # Prevents permanent application hang and crash by using the wrong Microphone
-    if 'linux' in platform:
-        mic_name = default_microphone
-        if not mic_name or mic_name == 'list':
-            print("Available microphone devices are: ")
-            for index, name in enumerate(sr.Microphone.list_microphone_names()):
-                print(f"Microphone with name \"{name}\" found")   
-            exit()
-        else:
-            for index, name in enumerate(sr.Microphone.list_microphone_names()):
-                if mic_name in name:
-                    source = sr.Microphone(sample_rate=16000, device_index=index)
-                    break
-    else:
-        source = sr.Microphone(sample_rate=16000)
-    main(source)
+    main()
