@@ -13,10 +13,11 @@ from hcsr04sensor import sensor
 
 # Robot states
 IDLE = 0
-GETTING_MESSAGE = 1
-DELIVERING = 2
-FETCHING_1 = 3
-FETCHING_2 = 4
+FETCH = 1
+DELIVERING_PART = 2
+REQUEST_1 = 3
+REQUEST_2 = 4
+DELIVERING_MESSAGE = 5
 
 
 # For car orientation and driving direction
@@ -403,7 +404,7 @@ while (True):
     #
     #
     destination = '405' # Destination bench will be stored in this variable
-    state = GETTING_MESSAGE
+    state = FETCH
 
 
     destX = benchX[destination]
@@ -434,7 +435,7 @@ while (True):
 
     # Visit benches and ask for input until idle
     while state != IDLE:
-        if state == GETTING_MESSAGE:
+        if state == FETCH:
             # Wait for voice input (get action)
             #
             # Use ear scrip
@@ -453,24 +454,29 @@ while (True):
                 if command == 'Deliver':
                     while weight < SCALE_THRESHOLD:     
                         time.sleep(0.5)
-                    state = DELIVERING
+                    state = DELIVERING_PART
                 if command == 'Fetch':
-                    state = FETCHING_1
-        if state == DELIVERING:
+                    state = REQUEST_1
+        if state == DELIVERING_PART:
             while weight < SCALE_THRESHOLD:
                 time.sleep(0.5)
             state = IDLE
-        if state == FETCHING_1:
+        if state == REQUEST_1:
             # Say what we are fetching
             #
             #
             #
             while weight < SCALE_THRESHOLD:
                 time.sleep(0.5)
-            state = FETCHING_2
-        if state == FETCHING_2:
+            state = REQUEST_2
+        if state == REQUEST_2:
             while weight >= SCALE_THRESHOLD:
                 time.sleep(0.5)
+            state = IDLE
+        if state == DELIVERING_MESSAGE:
+            #
+            # Deliver message with mouth module
+            #
             state = IDLE
         
         time.sleep(1.5)
