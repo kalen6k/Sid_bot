@@ -20,7 +20,7 @@ REQUEST_1 = 3
 REQUEST_2 = 4
 DELIVERING_MESSAGE = 5
 
-def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 4):
+def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_timeout: float = 1):
     # this works if your default microphone is set correctly
     source = sr.Microphone(sample_rate=16000)
     # The last time a recording was retreived from the queue.
@@ -38,6 +38,7 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
     temp_file = NamedTemporaryFile(suffix='.wav', delete = False).name
     transcription = ['']
     action_dict = []
+    action_recieved = False
     with source as temp_source:
         recorder.adjust_for_ambient_noise(temp_source)
         
@@ -103,21 +104,24 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
                     # If we detected a pause between recordings, add a new item to our transcripion.
                     # Otherwise edit the existing one.
                     if phrase_complete:
-                        if action_dict != []:
+                        if not action_recieved:
                             # remove the text before the occurence of "Sid" in the transcription
                             # this is to only process the text once the user says "Sid"
                             if text.find("Sid") != -1:
+                                speak("hmmmm")
                                 text = text[text.find("Sid"):]
                                 if state == IDLE:
                                     action_str = idle_controller(text)
                                     try:
                                         action_dict = ast.literal_eval(action_str)
+                                        action_recieved = True
                                     except:
                                         action_dict = []
                                 elif state == FETCH:
                                     action_str = fetched_controller(text)
                                     try:
                                         action_dict = ast.literal_eval(action_str)
+                                        action_recieved = True
                                     except:
                                         action_dict = []
                                 if action_dict != []:
@@ -126,11 +130,12 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
                                 
                             
                         else:
-                            if text.find("yes") or text.find("yeah") or text.find("yep") or text.find("sure") or text.find("correct"):
+                            if text.find("yes") != -1 or text.find("yeah") != -1 or text.find("yep") != -1 or text.find("sure") != -1 or text.find("correct") != -1:
                                 print("action_confirmed")
                                 return action_dict
-                            elif text.find("no") or text.find("nope") or text.find("nah") or text.find("wrong"):
+                            elif text.find("no") != -1 or text.find("nope") != -1 or text.find("nah") != -1 or text.find("wrong") != -1:
                                 action_dict = []
+                                action_recieved = False
                                 print("action_discarded")
                                
                     else:
@@ -151,7 +156,9 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
     print("\n\nTranscription:")
     for line in transcription:
         print(line)
+        print('\n')
 
 
 if __name__ == "__main__":
-    ear()
+    state = IDLE
+    ear(state)
