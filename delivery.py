@@ -30,8 +30,6 @@ HORIZONTAL = 4
 VERTICAL = 5
 
 ## These need to be tuned
-TARGET_SPEED = 3.0 # in ft/sec
-KP_SPEED = 40
 KP_STEER_ANGLE = 20
 KI_STEER_ANGLE = 1
 KP_STEER_POS = 5
@@ -49,7 +47,8 @@ HE_TICKS_IN_TURN = 26 # Number of Hall effect ticks in a 90 degree turn
 # Additional space needed for turns
 TURN_MARGIN = 3 # 1.5 in reality
 
-SCALE_THRESHOLD = 4500 # Needs to be adjusted
+SCALE_THRESHOLD = 772000 # Needs to be adjusted
+OBSTACLE_THRESHOLD = 50
 
 # Coordinates in feet
 benchX = {}
@@ -75,7 +74,7 @@ ultrasonicDist = 0
 weight = 0
 he_count = 0
 pi = pigpio.pi()
-ser = serial.Serial(port="/dev/ttyUSB0", baudrate=115200) # Use "dmesg" to figure out USB port
+ser = serial.Serial(port="/dev/ttyS0", baudrate=115200) # Use "dmesg" to figure out USB port
 GPIO.setmode(GPIO.BCM)
 
 # Thread that constantly reads the latest position from the Decawave board
@@ -148,6 +147,16 @@ def HE_callback(gpio, level, tick):
 #             print('Turn right backward')
 
 def turn(turnDir, driveDir):
+    if turnDir == LEFT:
+        if driveDir == FORWARD:
+            print('Turn left forward')
+        if driveDir == BACKWARD:
+            print('Turn left backward')
+    if turnDir == RIGHT:
+        if driveDir == FORWARD:
+            print('Turn right forward')
+        if driveDir == BACKWARD:
+            print('Turn right backward')
     global he_count
     he_count = 0
     if turnDir == LEFT:
@@ -156,7 +165,14 @@ def turn(turnDir, driveDir):
         pi.set_servo_pulsewidth(steering_pin, RIGHT_STEERING)
 
     while(he_count < HE_TICKS_IN_TURN):
-        pass
+        if (ultrasonicDist < 50):
+            waitObstacle()
+        if driveDir == FORWARD:
+            pi.set_PWM_dutycycle(drive_forward_pin, CONSTANT_MOTOR)
+            pi.set_PWM_dutycycle(drive_backward_pin, 0)
+        if driveDir == BACKWARD:
+            pi.set_PWM_dutycycle(drive_forward_pin, 0)
+            pi.set_PWM_dutycycle(drive_backward_pin, CONSTANT_MOTOR)
 
 
 # Drive function for testing navigation
@@ -189,6 +205,8 @@ def turn(turnDir, driveDir):
 #                 pass
 
 def drive(direction, axis, targetX, targetY):
+    if (ultrasonicDist < 50):
+        waitObstacle()
     condition = True
     angleErrorIntegral = 0
     while condition:
@@ -209,7 +227,6 @@ def drive(direction, axis, targetX, targetY):
             if axis == VERTICAL:
                 condition = posY > targetY
 
-        speedError = TARGET_SPEED - speed
         posError = 0
         targetAngle = 0
         if axis == HORIZONTAL:
@@ -246,12 +263,7 @@ def drive(direction, axis, targetX, targetY):
         if direction == BACKWARD:
             angleError = -angleError
         angleErrorIntegral += angleError
-        driveOutput = CONSTANT_MOTOR #KP_SPEED*speedError
-        
-        if driveOutput < 0:
-            driveOutput = 0
-        if driveOutput > 255:
-            driveOutput = 255
+        driveOutput = CONSTANT_MOTOR
 
         steerOutput = STRAIGHT_STEERING + KP_STEER_ANGLE*angleError + KI_STEER_ANGLE*angleErrorIntegral + KP_STEER_POS*pow(posError, 3) # Position will only matter when straying very far
         if steerOutput < MIN_STRAIGHT_ADJUST:
@@ -265,12 +277,18 @@ def drive(direction, axis, targetX, targetY):
         if direction == BACKWARD:
             pi.set_PWM_dutycycle(drive_forward_pin, 0)
             pi.set_PWM_dutycycle(drive_backward_pin, driveOutput)
-        print(driveOutput)
         
         pi.set_servo_pulsewidth(steering_pin, steerOutput)
         time.sleep(20/1000)
 
-
+def waitObstacle():
+    return()
+    stop()
+    # Path needs to be clear for 1.5 seconds
+    while ultrasonicDist < 50:
+        while ultrasonicDist < 50:
+            time.sleep(0.5)
+        time.sleep(1.5)
 
 def stopReverse():
     pi.set_servo_pulsewidth(steering_pin, STRAIGHT_STEERING)
@@ -369,7 +387,7 @@ while False:
     print('')
     time.sleep(1)
 
-homeX = -1
+homeX = 21#-1
 homeY = 21.5
 currentX = homeX
 
@@ -384,7 +402,7 @@ while (True):
     time.sleep(3)
     #
     #
-    destination = '408' # Destination bench will be stored in this variable
+    destination = '405' # Destination bench will be stored in this variable
     state = GETTING_MESSAGE
 
 
@@ -399,6 +417,7 @@ while (True):
         else:
             drive(FORWARD, HORIZONTAL, targetX=destX+TURN_MARGIN, targetY=homeY) # Drive forwards until reach row
             turn(RIGHT, FORWARD) # Turn right
+            orientation = FORWARD
     else:
         if orientation == FORWARD:
             drive(FORWARD, HORIZONTAL, targetX=destX-TURN_MARGIN, targetY=homeY) # Drive forwards until reach row
@@ -407,6 +426,7 @@ while (True):
             drive(BACKWARD, HORIZONTAL, targetX=destX+TURN_MARGIN-1, targetY=homeY) # Drive backwards until slightly passed row
             stopReverse()
             turn(RIGHT, FORWARD) # Turn right
+            orientation = FORWARD
 
     drive(FORWARD, VERTICAL, targetX=destX, targetY=destY) # Drive forward to bench
     stop()
@@ -425,13 +445,13 @@ while (True):
             # old_ear.py will give these three inputs
             failed = False
             command = 'Deliver' # Command will be 'Deliver' or 'Request'
-            destination = '211'
+            destination = '407'
 
             if failed:
                 state = IDLE
             else:
                 if command == 'Deliver':
-                    while weight < SCALE_THRESHOLD:
+                    while weight < SCALE_THRESHOLD:     
                         time.sleep(0.5)
                     state = DELIVERING
                 if command == 'Fetch':
@@ -473,6 +493,7 @@ while (True):
                     orientation = BACKWARD
                     drive(FORWARD, HORIZONTAL, targetX=destX+TURN_MARGIN, targetY=homeY) # Drive forwards until reach row
                     turn(RIGHT, FORWARD)
+                    orientation = FORWARD
                 else:
                     turn(LEFT, BACKWARD)
                     stopReverse()
