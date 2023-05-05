@@ -108,36 +108,29 @@ def ear(state, energy_threshold: int = 600, record_timeout: float = 2, phrase_ti
                             # remove the text before the occurence of "Sid" in the transcription
                             # this is to only process the text once the user says "Sid"
                             if text.find("Sid") != -1:
-                                speak("hmmmm")
+                                speak("hmmmmmmm")
                                 text = text[text.find("Sid"):]
                                 if state == IDLE:
                                     action_str = idle_controller(text)
                                     try:
                                         action_dict = ast.literal_eval(action_str)
+                                        print("action_confirmed")
                                         action_recieved = True
+                                        speak(announce_action(action_dict))
+                                        return action_dict
                                     except:
                                         action_dict = []
                                 elif state == FETCH:
                                     action_str = fetched_controller(text)
                                     try:
                                         action_dict = ast.literal_eval(action_str)
+                                        print("action_confirmed")
                                         action_recieved = True
+                                        speak(announce_action(action_dict))
+                                        return action_dict
                                     except:
                                         action_dict = []
-                                if action_dict != []:
-                                    speak(announce_action(action_dict))
                                 #transcription.append(text)
-                                
-                            
-                        else:
-                            if text.find("yes") != -1 or text.find("yeah") != -1 or text.find("yep") != -1 or text.find("sure") != -1 or text.find("correct") != -1:
-                                print("action_confirmed")
-                                return action_dict
-                            elif text.find("no") != -1 or text.find("nope") != -1 or text.find("nah") != -1 or text.find("wrong") != -1:
-                                action_dict = []
-                                action_recieved = False
-                                print("action_discarded")
-                               
                     else:
                         transcription[-1] = text
 
